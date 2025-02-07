@@ -1,27 +1,46 @@
 async function fetchStockPrices() {
     try {
-        // Lista de símbolos das ações e do USD para a API do Yahoo Finance
-        const symbols = ["USDBRL=X", "NVDA", "AAPL", "PETR4.SA", "VALE3.SA"];
-        const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${symbols.join(",")}`;
-
+        // Faz a requisição à sua API no PythonAnywhere
+        const url = 'https://edsonvinicius76.pythonanywhere.com/api/market';
+        
         // Faz a requisição à API
         const response = await fetch(url);
         const data = await response.json();
+        
+        console.log("Dados recebidos:", data);  // Adicionando log para depuração
 
         // Mapeia os resultados para atualizar os elementos HTML correspondentes
         const stockData = {
-            "USDBRL=X": "usdbrl",
-            "NVDA": "nvda",
-            "AAPL": "aapl",
-            "PETR4.SA": "petr4",
-            "VALE3.SA": "vale3"
+            "Apple (AAPL)": "aapl",
+            "Nvidia (NVDA)": "nvda",
+            "Petrobras (PBR)": "petr4",
+            "USD/BRL": "usdbrl"
         };
 
         // Atualiza os valores no front-end
-        data.quoteResponse.result.forEach(stock => {
-            const elementId = stockData[stock.symbol];
+        Object.keys(data).forEach(stock => {
+            const elementId = stockData[stock];
             if (elementId) {
-                document.getElementById(elementId).innerText = `R$ ${stock.regularMarketPrice.toFixed(2)}`;
+                let price;
+                
+                // Se for o USD/BRL, pega o valor do campo correto
+                if (stock === "USD/BRL") {
+                    price = data[stock]["USD/BRL"];
+                } else if (data[stock] && data[stock].close) {
+                    price = data[stock].close;
+                } else {
+                    console.error(`Preço não encontrado para ${stock}`);
+                    return;  // Pula a atualização caso não encontre o preço
+                }
+                
+                // Exibe os dados no frontend
+                const formattedPrice = `R$ ${price.toFixed(2)}`;
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.innerText = formattedPrice;
+                } else {
+                    console.error(`Elemento com ID ${elementId} não encontrado.`);
+                }
             }
         });
 
